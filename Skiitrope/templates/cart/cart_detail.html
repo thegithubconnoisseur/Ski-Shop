@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Your cart — Skiitrope{% endblock %}
+
+{% block content %}
+<div class="container section">
+  <div class="page-head">
+    <h1>Your cart</h1>
+    <p class="muted">{{ cart.count }} item{{ cart.count|pluralize }} · prices in USD</p>
+  </div>
+
+  {% if cart %}
+    <div class="cart-layout">
+      <div class="cart-items">
+        {% for item in cart %}
+          <div class="cart-item">
+            <a class="cart-item-media" href="{{ item.product.get_absolute_url }}">
+              {% if item.product.image %}
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+              {% else %}
+                <div class="product-placeholder">SKII</div>
+              {% endif %}
+            </a>
+            <div class="cart-item-info">
+              <span class="product-category">{{ item.product.category.name }}</span>
+              <h3><a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a></h3>
+              <span class="muted">${{ item.price|floatformat:2 }} each</span>
+            </div>
+            <form class="cart-item-qty" method="post" action="{% url 'cart:cart_update' item.product.id %}">
+              {% csrf_token %}
+              <input class="qty-input field-input" type="number" name="quantity" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}">
+              <button type="submit" class="btn btn-ghost btn-sm">Update</button>
+            </form>
+            <div class="cart-item-total">${{ item.total|floatformat:2 }}</div>
+            <form method="post" action="{% url 'cart:cart_remove' item.product.id %}">
+              {% csrf_token %}
+              <button type="submit" class="icon-btn" aria-label="Remove {{ item.product.name }}" title="Remove">×</button>
+            </form>
+          </div>
+        {% endfor %}
+        <a class="link-blue" href="{% url 'store:product_list' %}">← Continue shopping</a>
+      </div>
+
+      <aside class="summary-card">
+        <h2>Order summary</h2>
+        <div class="summary-row"><span>Subtotal</span><span>${{ cart.subtotal|floatformat:2 }}</span></div>
+        <div class="summary-row">
+          <span>Shipping</span>
+          <span>{% if cart.shipping %}${{ cart.shipping|floatformat:2 }}{% else %}<span class="text-blue">Free</span>{% endif %}</span>
+        </div>
+        <div class="summary-row summary-total"><span>Total</span><span>${{ cart.total|floatformat:2 }} <span class="muted">USD</span></span></div>
+        {% if cart.free_shipping_remaining %}
+          <p class="muted small">Add ${{ cart.free_shipping_remaining|floatformat:2 }} more to reach free shipping — spend ${{ shop.free_shipping_threshold }} or more and shipping is on us.</p>
+        {% endif %}
+        <a class="btn btn-red btn-lg btn-block" href="{% url 'orders:checkout' %}">Proceed to checkout</a>
+        <p class="muted small">Secure payment via Stripe · Visa, Mastercard, AMEX, Apple&nbsp;Pay · Ships worldwide</p>
+      </aside>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Your cart is empty</h3>
+      <p class="muted">Find your next setup — skis, boards, boots and more.</p>
+      <a class="btn btn-red" href="{% url 'store:product_list' %}">Start shopping</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

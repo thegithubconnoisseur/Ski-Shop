@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout — Skiitrope{% endblock %}
+
+{% block content %}
+<div class="container section">
+  <div class="page-head">
+    <div>
+      <h1>Checkout</h1>
+      <p class="muted">Prices in USD · secure international payment via Stripe</p>
+    </div>
+    <div class="checkout-steps">
+      <span class="step step-done">Cart</span>
+      <span class="step step-active">Details</span>
+      <span class="step">Payment</span>
+    </div>
+  </div>
+
+  {% if not payments_configured %}
+    <div class="notice notice-blue">
+      <strong>Card payments are not switched on yet.</strong>
+      <p>Add <code>STRIPE_SECRET_KEY</code> (and <code>STRIPE_PUBLIC_KEY</code>) to your
+      <code>.env</code> file to start accepting USD payments. See <code>SETUP.md</code> →
+      “Stripe” for the steps. You can still fill in the form to test shipping details.</p>
+    </div>
+  {% endif %}
+
+  <div class="checkout-layout">
+    <form class="checkout-form" method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="notice notice-red">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <fieldset class="form-block">
+        <legend>Contact</legend>
+        <div class="field">
+          <label for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="field">
+          <label for="{{ form.full_name.id_for_label }}">Full name</label>
+          {{ form.full_name }}
+          {% if form.full_name.errors %}<span class="field-error">{{ form.full_name.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="field">
+          <label for="{{ form.phone.id_for_label }}">Phone <span class="muted">(optional)</span></label>
+          {{ form.phone }}
+          {% if form.phone.errors %}<span class="field-error">{{ form.phone.errors.0 }}</span>{% endif %}
+        </div>
+      </fieldset>
+
+      <fieldset class="form-block">
+        <legend>Shipping address <span class="muted">— we ship worldwide</span></legend>
+        <div class="field">
+          <label for="{{ form.address_line1.id_for_label }}">Address</label>
+          {{ form.address_line1 }}
+          {% if form.address_line1.errors %}<span class="field-error">{{ form.address_line1.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="field">
+          <label for="{{ form.address_line2.id_for_label }}">Address line 2 <span class="muted">(optional)</span></label>
+          {{ form.address_line2 }}
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="{{ form.city.id_for_label }}">City</label>
+            {{ form.city }}
+            {% if form.city.errors %}<span class="field-error">{{ form.city.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="field">
+            <label for="{{ form.state.id_for_label }}">State / Province</label>
+            {{ form.state }}
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="{{ form.postal_code.id_for_label }}">Postal code</label>
+            {{ form.postal_code }}
+          </div>
+          <div class="field">
+            <label for="{{ form.country.id_for_label }}">Country</label>
+            {{ form.country }}
+            {% if form.country.errors %}<span class="field-error">{{ form.country.errors.0 }}</span>{% endif %}
+          </div>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="btn btn-red btn-lg btn-block">
+        Continue to secure payment — ${{ cart.total|floatformat:2 }} USD
+      </button>
+      <p class="muted small center">You’ll be redirected to Stripe’s secure checkout to pay by card.</p>
+    </form>
+
+    <aside class="summary-card">
+      <h2>Order summary</h2>
+      {% for item in cart %}
+        <div class="summary-item">
+          <span class="summary-item-name">{{ item.quantity }} × {{ item.product.name }}</span>
+          <span>${{ item.total|floatformat:2 }}</span>
+        </div>
+      {% endfor %}
+      <div class="summary-row"><span>Subtotal</span><span>${{ cart.subtotal|floatformat:2 }}</span></div>
+      <div class="summary-row">
+        <span>Shipping</span>
+        <span>{% if cart.shipping %}${{ cart.shipping|floatformat:2 }}{% else %}<span class="text-blue">Free</span>{% endif %}</span>
+      </div>
+      <div class="summary-row summary-total"><span>Total</span><span>${{ cart.total|floatformat:2 }} <span class="muted">USD</span></span></div>
+      <p class="muted small">Pay with Visa, Mastercard, AMEX, Apple&nbsp;Pay or Google&nbsp;Pay. Charges appear in US dollars.</p>
+    </aside>
+  </div>
+</div>
+{% endblock %}

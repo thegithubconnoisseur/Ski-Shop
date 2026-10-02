@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Sign out — Skiitrope{% endblock %}
+
+{% block content %}
+<div class="container section">
+  <div class="auth-card">
+    <h1>Sign out</h1>
+    <p class="muted">Are you sure you want to sign out of Skiitrope?</p>
+    <form method="post" action="{% url 'account_logout' %}" class="auth-form">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-red btn-block">Sign out</button>
+    </form>
+    <p class="auth-links"><a class="link-blue" href="{% url 'store:home' %}">Stay signed in</a></p>
+  </div>
+</div>
+{% endblock %}

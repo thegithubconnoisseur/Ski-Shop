@@ -1,0 +1,30 @@
+Skiitrope — order confirmation
+==============================
+
+Hi {{ order.full_name|default:"rider" }},
+
+Thanks for your order! Your payment of ${{ order.total|floatformat:2 }} USD has been received and your gear is being prepared.
+
+Order number: {{ order.number }}
+Order date: {{ order.created_at|date:"F j, Y" }}
+
+Items
+-----
+{% for item in items %}{{ item.quantity }} x {{ item.product_name }} — ${{ item.line_total|floatformat:2 }}
+{% endfor %}
+Subtotal: ${{ order.subtotal|floatformat:2 }}
+Shipping: {% if order.shipping %}${{ order.shipping|floatformat:2 }}{% else %}Free{% endif %}
+Total paid: ${{ order.total|floatformat:2 }} USD
+
+Shipping to
+------------
+{{ order.full_name }}
+{{ order.shipping_address }}
+
+What happens next?
+- We pack your gear within 1-2 business days.
+- You'll receive tracking details by email as soon as it ships.
+- Need help? Just reply to this email.
+
+Thanks for riding with Skiitrope.
+https://skiitrope.com

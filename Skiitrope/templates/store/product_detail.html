@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} — Skiitrope{% endblock %}
+{% block meta_description %}{{ product.description|truncatewords:25 }}{% endblock %}
+
+{% block content %}
+<div class="container section">
+  <nav class="breadcrumbs">
+    <a href="{% url 'store:home' %}">Home</a>
+    <span>/</span>
+    <a href="{% url 'store:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a>
+    <span>/</span>
+    <span class="muted">{{ product.name }}</span>
+  </nav>
+
+  <div class="product-detail">
+    <div class="product-detail-media">
+      {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+      {% else %}
+        <div class="product-placeholder product-placeholder-lg">SKII</div>
+      {% endif %}
+    </div>
+
+    <div class="product-detail-info">
+      <span class="product-category">{{ product.category.name }}</span>
+      <h1>{{ product.name }}</h1>
+      <div class="price price-lg">${{ product.price|floatformat:2 }} <span class="currency muted">USD</span></div>
+
+      <p class="product-description">{{ product.description|linebreaksbr }}</p>
+
+      <div class="stock-row">
+        {% if product.in_stock %}
+          <span class="tag tag-blue">In stock · {{ product.stock }} available</span>
+        {% else %}
+          <span class="tag tag-red">Sold out</span>
+        {% endif %}
+      </div>
+
+      {% if product.in_stock %}
+        <form method="post" action="{% url 'cart:cart_add' product.id %}" class="buy-form">
+          {% csrf_token %}
+          <label class="qty-label" for="quantity">Qty</label>
+          <input class="qty-input field-input" id="quantity" type="number" name="quantity" value="1" min="1" max="{{ product.stock }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-red btn-lg">Add to cart</button>
+        </form>
+      {% endif %}
+
+      <ul class="assurance">
+        <li><span class="dot dot-blue"></span> Ships worldwide — flat $15, free over $300</li>
+        <li><span class="dot dot-red"></span> Secure USD checkout with international cards</li>
+        <li><span class="dot dot-white"></span> Confirmation email as soon as your payment clears</li>
+      </ul>
+    </div>
+  </div>
+
+  {% if related_products %}
+    <section class="section">
+      <div class="section-head">
+        <h2>More {{ product.category.name|lower }}</h2>
+      </div>
+      <div class="product-grid">
+        {% for product in related_products %}
+          {% include "store/_product_card.html" with product=product %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

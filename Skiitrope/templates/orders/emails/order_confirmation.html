@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Order {{ order.number }} confirmed</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f2f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111114;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f4;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e3e3e8;">
+
+          <tr>
+            <td style="background:#0a0a0c;padding:22px 28px;">
+              <span style="color:#ffffff;font-size:20px;font-weight:800;letter-spacing:2px;">SKII<span style="color:#e8112d;">TROPE</span></span>
+              <span style="float:right;color:#8f8f98;font-size:12px;padding-top:6px;">Order confirmed</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="height:4px;background:#e8112d;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px;">
+              <h1 style="margin:0 0 8px;font-size:22px;color:#111114;">Thanks for your order{% if order.full_name %}, {{ order.full_name }}{% endif %}!</h1>
+              <p style="margin:0 0 20px;color:#55555e;font-size:15px;line-height:1.5;">
+                We received your payment of <strong style="color:#111114;">${{ order.total|floatformat:2 }} USD</strong>.
+                Your gear is being prepared and will ship shortly.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:8px;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:14px 18px;font-size:14px;color:#55555e;">
+                    Order number<br>
+                    <strong style="color:#1f6feb;font-size:16px;">{{ order.number }}</strong>
+                  </td>
+                  <td style="padding:14px 18px;font-size:14px;color:#55555e;" align="right">
+                    Order date<br>
+                    <strong style="color:#111114;">{{ order.created_at|date:"F j, Y" }}</strong>
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:1px;color:#111114;">Your items</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+                {% for item in items %}
+                  <tr>
+                    <td style="padding:10px 0;border-bottom:1px solid #ececf0;font-size:14px;color:#111114;">
+                      {{ item.product_name }}<br>
+                      <span style="color:#8f8f98;font-size:13px;">Qty {{ item.quantity }} × ${{ item.unit_price|floatformat:2 }}</span>
+                    </td>
+                    <td style="padding:10px 0;border-bottom:1px solid #ececf0;font-size:14px;color:#111114;" align="right" valign="top">
+                      ${{ item.line_total|floatformat:2 }}
+                    </td>
+                  </tr>
+                {% endfor %}
+                <tr>
+                  <td style="padding:10px 0;font-size:14px;color:#55555e;">Subtotal</td>
+                  <td style="padding:10px 0;font-size:14px;color:#111114;" align="right">${{ order.subtotal|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 0;font-size:14px;color:#55555e;">Shipping</td>
+                  <td style="padding:4px 0;font-size:14px;color:#111114;" align="right">
+                    {% if order.shipping %}${{ order.shipping|floatformat:2 }}{% else %}<span style="color:#1f6feb;">Free</span>{% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 0 0;font-size:16px;font-weight:700;color:#111114;border-top:2px solid #111114;">Total paid</td>
+                  <td style="padding:12px 0 0;font-size:16px;font-weight:700;color:#e8112d;border-top:2px solid #111114;" align="right">${{ order.total|floatformat:2 }} USD</td>
+                </tr>
+              </table>
+
+              <h2 style="margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:1px;color:#111114;">Shipping to</h2>
+              <p style="margin:0 0 22px;font-size:14px;color:#55555e;line-height:1.6;">
+                {{ order.full_name }}<br>{{ order.shipping_address|linebreaksbr }}
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-left:4px solid #1f6feb;border-radius:6px;">
+                <tr>
+                  <td style="padding:14px 18px;font-size:14px;color:#55555e;line-height:1.6;">
+                    <strong style="color:#111114;">What happens next?</strong><br>
+                    We pack your gear within 1–2 business days. You’ll get tracking details by email as soon as it ships. Questions? Just reply to this email.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#0a0a0c;padding:18px 28px;color:#8f8f98;font-size:12px;line-height:1.6;">
+              Skiitrope — skis, snowboards &amp; alpine gear.<br>
+              Prices in USD · International shipping available.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

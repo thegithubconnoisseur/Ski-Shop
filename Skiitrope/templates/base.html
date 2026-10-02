@@ -1,0 +1,105 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Skiitrope — Skis, Snowboards &amp; Alpine Gear{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Skiitrope sells skis, snowboards and alpine gear. Fast international shipping, secure USD checkout.{% endblock %}">
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{% url 'store:home' %}">
+        <span class="brand-mark">S</span>
+        <span class="brand-name">SKII<span class="brand-accent">TROPE</span></span>
+      </a>
+
+      <nav class="main-nav" aria-label="Main">
+        <a href="{% url 'store:product_list' %}">Shop all</a>
+        <a href="{% url 'store:product_list' %}?category=skis">Skis</a>
+        <a href="{% url 'store:product_list' %}?category=snowboards">Snowboards</a>
+        <a href="{% url 'store:product_list' %}?category=boots-bindings">Boots &amp; Bindings</a>
+        <a href="{% url 'store:product_list' %}?category=apparel">Apparel</a>
+        <a href="{% url 'store:product_list' %}?category=accessories">Accessories</a>
+      </nav>
+
+      <div class="header-actions">
+        {% if user.is_authenticated %}
+          <div class="account-menu">
+            <span class="account-email" title="{{ user.email }}">{{ user.get_short_name|default:user.email }}</span>
+            <form method="post" action="{% url 'account_logout' %}" class="inline-form">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-ghost btn-sm">Sign out</button>
+            </form>
+          </div>
+        {% else %}
+          <a class="btn btn-ghost btn-sm" href="{% url 'account_login' %}">Sign in</a>
+        {% endif %}
+        <a class="cart-link" href="{% url 'cart:cart_detail' %}" aria-label="Cart">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/>
+            <path d="M2.5 3.5h2.2l2.3 12.2a1.8 1.8 0 0 0 1.8 1.5h8.9a1.8 1.8 0 0 0 1.8-1.4l1.7-7.6H5.6"/>
+          </svg>
+          <span>Cart</span>
+          {% if cart.count %}<span class="cart-badge">{{ cart.count }}</span>{% endif %}
+        </a>
+      </div>
+    </div>
+  </header>
+
+  {% if messages %}
+    <div class="container messages">
+      {% for message in messages %}
+        <div class="message message-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <div class="brand brand-footer">
+          <span class="brand-mark">S</span>
+          <span class="brand-name">SKII<span class="brand-accent">TROPE</span></span>
+        </div>
+        <p class="muted">Skis, snowboards and alpine gear for riders everywhere. Prices in USD, shipped worldwide.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <a href="{% url 'store:product_list' %}?category=skis">Skis</a>
+        <a href="{% url 'store:product_list' %}?category=snowboards">Snowboards</a>
+        <a href="{% url 'store:product_list' %}?category=boots-bindings">Boots &amp; Bindings</a>
+        <a href="{% url 'store:product_list' %}?category=apparel">Apparel</a>
+        <a href="{% url 'store:product_list' %}?category=accessories">Accessories</a>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <a href="{% url 'cart:cart_detail' %}">Your cart</a>
+        <a href="{% url 'account_login' %}">Sign in</a>
+        <span class="muted">Free shipping over $300</span>
+        <span class="muted">International shipping available</span>
+      </div>
+      <div>
+        <h4>Payments</h4>
+        <p class="muted">Secure USD checkout with international cards via Stripe.</p>
+        <div class="pay-badges">
+          <span class="pay-badge">VISA</span>
+          <span class="pay-badge">Mastercard</span>
+          <span class="pay-badge">AMEX</span>
+          <span class="pay-badge">Apple&nbsp;Pay</span>
+        </div>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span class="muted">© {% now "Y" %} Skiitrope. All rights reserved.</span>
+      <span class="muted">Built with Django · Data on Supabase · Emails by Mailgun</span>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-media" style="background-image:url('{% static 'img/hero.jpg' %}')"></div>
+  <div class="hero-overlay"></div>
+  <div class="container hero-content">
+    <span class="eyebrow eyebrow-blue">Season 2026 · New gear in</span>
+    <h1>Ride the <span class="text-red">whiteout</span>.<br>Own the <span class="text-blue">descent</span>.</h1>
+    <p class="hero-sub">
+      Skis, snowboards and alpine gear built for the mountain — shipped anywhere
+      in the world. All prices in USD, pay with any international card.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-red btn-lg" href="{% url 'store:product_list' %}">Shop the collection</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:product_list' %}?category=snowboards">Snowboards</a>
+    </div>
+    <ul class="hero-points">
+      <li><span class="dot dot-red"></span> Secure USD checkout</li>
+      <li><span class="dot dot-blue"></span> Worldwide shipping</li>
+      <li><span class="dot dot-white"></span> Free shipping over $300</li>
+    </ul>
+  </div>
+</section>
+
+<section class="container section">
+  <div class="section-head">
+    <h2>Shop by category</h2>
+    <p class="muted">Everything you need for a full season, from first chair to last run.</p>
+  </div>
+  <div class="category-grid">
+    {% for category in categories %}
+      <a class="category-tile" href="{% url 'store:product_list' %}?category={{ category.slug }}">
+        <span class="category-name">{{ category.name }}</span>
+        <span class="category-desc muted">{{ category.description|default:"Explore the range" }}</span>
+        <span class="category-count">{{ category.products.count }} product{{ category.products.count|pluralize }}</span>
+      </a>
+    {% empty %}
+      <p class="muted">No categories yet — add some in the admin.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="container section">
+  <div class="section-head">
+    <h2>Featured gear</h2>
+    <a class="link-blue" href="{% url 'store:product_list' %}">View all products →</a>
+  </div>
+  <div class="product-grid">
+    {% for product in featured_products %}
+      {% include "store/_product_card.html" with product=product %}
+    {% empty %}
+      <p class="muted">No products yet — run <code>python manage.py seed_products</code>.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section band">
+  <div class="container band-grid">
+    <div class="band-item">
+      <span class="band-kicker kicker-red">Secure</span>
+      <h3>Pay in USD, from anywhere</h3>
+      <p class="muted">Card payments processed by Stripe with international cards, Apple&nbsp;Pay and Google&nbsp;Pay supported.</p>
+    </div>
+    <div class="band-item">
+      <span class="band-kicker kicker-blue">Worldwide</span>
+      <h3>International shipping</h3>
+      <p class="muted">We ship to over 200 countries. Flat $15 shipping, free on orders above $300.</p>
+    </div>
+    <div class="band-item">
+      <span class="band-kicker kicker-white">Pro gear</span>
+      <h3>Built for the mountain</h3>
+      <p class="muted">Hand-picked skis, boards and boots from riders who spend every winter on the snow.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

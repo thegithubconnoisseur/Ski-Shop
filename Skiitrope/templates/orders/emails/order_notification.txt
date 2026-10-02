@@ -1,0 +1,25 @@
+New order placed at Skiitrope
+=============================
+
+Order number: {{ order.number }}
+Placed: {{ order.created_at|date:"F j, Y H:i" }} UTC
+Status: {{ order.get_status_display }}
+
+Customer
+--------
+{{ order.full_name }} <{{ order.email }}>
+{% if order.phone %}Phone: {{ order.phone }}
+{% endif %}
+Items
+-----
+{% for item in items %}{{ item.quantity }} x {{ item.product_name }} — ${{ item.line_total|floatformat:2 }}
+{% endfor %}
+Subtotal: ${{ order.subtotal|floatformat:2 }}
+Shipping: {% if order.shipping %}${{ order.shipping|floatformat:2 }}{% else %}Free{% endif %}
+Total: ${{ order.total|floatformat:2 }} {{ order.currency }}
+
+Ship to
+-------
+{{ order.shipping_address }}
+
+Manage this order in the Django admin (/admin/).

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{% if current_category %}{{ current_category.name }}{% else %}Shop all gear{% endif %} — Skiitrope{% endblock %}
+
+{% block content %}
+<div class="container section">
+  <div class="page-head">
+    <div>
+      <h1>{% if current_category %}{{ current_category.name }}{% elif query %}Results for “{{ query }}”{% else %}Shop all gear{% endif %}</h1>
+      <p class="muted">
+        {% if current_category %}{{ current_category.description|default:"Showing all products in this category." }}
+        {% else %}Skis, snowboards, boots and everything in between — priced in USD.{% endif %}
+      </p>
+    </div>
+    <form class="search-form" method="get" action="{% url 'store:product_list' %}">
+      {% if current_category %}<input type="hidden" name="category" value="{{ current_category.slug }}">{% endif %}
+      <input class="field-input" type="search" name="q" value="{{ query }}" placeholder="Search gear…" aria-label="Search products">
+      <button class="btn btn-blue" type="submit">Search</button>
+    </form>
+  </div>
+
+  <div class="filter-chips">
+    <a class="chip {% if not current_category %}chip-active{% endif %}" href="{% url 'store:product_list' %}">All</a>
+    {% for category in categories %}
+      <a class="chip {% if current_category and current_category.id == category.id %}chip-active{% endif %}"
+         href="{% url 'store:product_list' %}?category={{ category.slug }}">{{ category.name }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="product-grid">
+    {% for product in products %}
+      {% include "store/_product_card.html" with product=product %}
+    {% empty %}
+      <div class="empty-state">
+        <h3>Nothing found</h3>
+        <p class="muted">Try a different search or browse another category.</p>
+        <a class="btn btn-red" href="{% url 'store:product_list' %}">Browse all products</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

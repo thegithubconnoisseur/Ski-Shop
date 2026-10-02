@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Payment cancelled — Skiitrope{% endblock %}
+
+{% block content %}
+<div class="container section">
+  <div class="empty-state">
+    <h1>Payment cancelled</h1>
+    <p class="muted">
+      Nothing was charged and your cart is still waiting for you. Ready when you are.
+    </p>
+    <div class="button-row">
+      <a class="btn btn-red" href="{% url 'orders:checkout' %}">Try checkout again</a>
+      <a class="btn btn-outline" href="{% url 'cart:cart_detail' %}">Back to cart</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

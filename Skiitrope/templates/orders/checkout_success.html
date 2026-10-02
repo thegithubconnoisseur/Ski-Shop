@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Order confirmed — Skiitrope{% endblock %}
+
+{% block content %}
+<div class="container section">
+  {% if order and order.status == "paid" %}
+    <div class="success-hero">
+      <span class="success-check" aria-hidden="true">✓</span>
+      <h1>Thanks for your order!</h1>
+      <p class="muted">
+        Order <strong>{{ order.number }}</strong> is confirmed. A confirmation email
+        is on its way to <strong>{{ order.email }}</strong>.
+      </p>
+    </div>
+
+    <div class="checkout-layout">
+      <div class="summary-card">
+        <h2>Order details</h2>
+        {% for item in order.items.all %}
+          <div class="summary-item">
+            <span class="summary-item-name">{{ item.quantity }} × {{ item.product_name }}</span>
+            <span>${{ item.line_total|floatformat:2 }}</span>
+          </div>
+        {% endfor %}
+        <div class="summary-row"><span>Subtotal</span><span>${{ order.subtotal|floatformat:2 }}</span></div>
+        <div class="summary-row">
+          <span>Shipping</span>
+          <span>{% if order.shipping %}${{ order.shipping|floatformat:2 }}{% else %}<span class="text-blue">Free</span>{% endif %}</span>
+        </div>
+        <div class="summary-row summary-total"><span>Paid</span><span>${{ order.total|floatformat:2 }} <span class="muted">USD</span></span></div>
+      </div>
+
+      <div class="summary-card">
+        <h2>Shipping to</h2>
+        <p class="muted">{{ order.full_name }}<br>{{ order.shipping_address|linebreaksbr }}</p>
+        <h2 class="mt">What happens next?</h2>
+        <ul class="assurance">
+          <li><span class="dot dot-red"></span> We pack your gear within 1–2 business days.</li>
+          <li><span class="dot dot-blue"></span> You’ll receive tracking by email once it ships.</li>
+          <li><span class="dot dot-white"></span> Questions? Just reply to your confirmation email.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="center mt">
+      <a class="btn btn-outline" href="{% url 'store:product_list' %}">Continue shopping</a>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h1>We’re confirming your payment…</h1>
+      <p class="muted">
+        If you completed payment, your confirmation email will arrive shortly. If
+        this page keeps showing, contact us and quote your Stripe receipt.
+      </p>
+      <a class="btn btn-red" href="{% url 'store:home' %}">Back to the shop</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

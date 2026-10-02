@@ -1,0 +1,15 @@
+from django.conf import settings
+
+from .cart import Cart
+
+
+def cart(request):
+    return {
+        "cart": Cart(request),
+        "shop": {
+            "currency": settings.SHOP_CURRENCY,
+            "currency_symbol": settings.SHOP_CURRENCY_SYMBOL,
+            "free_shipping_threshold": settings.FREE_SHIPPING_THRESHOLD,
+            "flat_shipping_rate": settings.FLAT_SHIPPING_RATE,
+        },
+    }

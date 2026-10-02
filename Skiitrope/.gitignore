@@ -1,0 +1,23 @@
+# Environment / secrets
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+mailgun.py
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.log

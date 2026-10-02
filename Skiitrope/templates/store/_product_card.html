@@ -1,0 +1,29 @@
+{% load static %}
+<article class="product-card">
+  <a class="product-card-media" href="{{ product.get_absolute_url }}">
+    {% if product.image %}
+      <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+    {% else %}
+      <div class="product-placeholder">SKII</div>
+    {% endif %}
+    {% if product.is_featured %}<span class="tag tag-blue">Featured</span>{% endif %}
+    {% if not product.in_stock %}<span class="tag tag-red">Sold out</span>{% endif %}
+  </a>
+  <div class="product-card-body">
+    <span class="product-category">{{ product.category.name }}</span>
+    <h3 class="product-name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+    <div class="product-card-foot">
+      <span class="price">${{ product.price|floatformat:2 }}</span>
+      {% if product.in_stock %}
+        <form method="post" action="{% url 'cart:cart_add' product.id %}" class="inline-form">
+          {% csrf_token %}
+          <input type="hidden" name="quantity" value="1">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-red btn-sm">Add to cart</button>
+        </form>
+      {% else %}
+        <button class="btn btn-disabled btn-sm" disabled>Sold out</button>
+      {% endif %}
+    </div>
+  </div>
+</article>

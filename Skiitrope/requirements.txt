@@ -1,0 +1,10 @@
+Django==6.1.1
+dj-database-url==3.0.1
+django-allauth==65.19.7
+django-anymail==15.2
+django-countries==9.1.0
+pillow==11.3.0
+psycopg[binary]>=3.2,<4
+python-dotenv==1.0.1
+stripe==16.0.0
+whitenoise==6.11.0
