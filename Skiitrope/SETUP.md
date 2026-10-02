@@ -254,35 +254,71 @@ touched while testing.
 
 ---
 
-## 6. Going live (checklist)
+## 6. Deploying to Render
 
-When you deploy the site (e.g. Render, Railway, Fly.io or a VPS):
+**Why a first attempt fails:** your GitHub repo (`Ski-Shop`) holds several
+projects in one repo and Skiitrope sits in a subfolder. Render only scans the
+**root** of the repo — with "Root Directory" left empty it finds no Python
+project and the build fails immediately. One field fixes it (step 3).
 
-1. Set these environment variables on the host:
-   - `DJANGO_DEBUG=False`
-   - `DJANGO_SECRET_KEY=` a fresh random key —
-     `python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"`
-   - `DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com`
-   - `DJANGO_CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com`
-   - The same `DATABASE_URL`, Mailgun, Google and Stripe variables as above.
-2. Run the release commands on the host:
+1. In the Render dashboard: **New + → Web Service**.
+2. Connect your GitHub account if asked, then pick the **Ski-Shop** repo.
+3. On the settings page, fill in:
+   - **Name**: `skiitrope`
+   - **Region**: Frankfurt (closest to Nigeria)
+   - **Branch**: `main`
+   - **Root Directory**: `Skiitrope` ← the important one
+   - **Runtime**: Python 3
+   - **Build Command**:
 
-   ```bash
-   python manage.py migrate
-   python manage.py collectstatic --noinput
-   python manage.py seed_products     # only the first time, to fill the catalogue
-   ```
+     ```bash
+     pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --no-input && python manage.py seed_products
+     ```
 
-3. Serve with a production server, e.g.:
+   - **Start Command**: `gunicorn skiitrope.wsgi:application`
+   - **Instance Type**: Free
+4. Under **Environment**, add these variables — the same values as your
+   local `.env` (Render does not read `.env`; it only sees what you add here):
 
-   ```bash
-   gunicorn skiitrope.wsgi:application
-   ```
+   | Variable | Value |
+   | --- | --- |
+   | `DJANGO_SECRET_KEY` | the long key from your `.env` |
+   | `DATABASE_URL` | your Supabase session-pooler string ending in `?sslmode=require` |
+   | `DB_CONN_MAX_AGE` | `0` |
+   | `STRIPE_PUBLIC_KEY`, `STRIPE_SECRET_KEY` | your Stripe test keys |
+   | `STRIPE_WEBHOOK_SECRET` | the signing secret from the endpoint you create in step 6 |
+   | `MAILGUN_API_KEY`, `MAILGUN_SENDER_DOMAIN` | from Mailgun |
+   | `DEFAULT_FROM_EMAIL`, `SERVER_EMAIL` | `postmaster@<your-sandbox-domain>` |
+   | `ORDER_NOTIFICATION_EMAIL` | your email |
+   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | from Google Cloud Console |
 
-4. Add your production redirect URI to the Google OAuth client (section 3,
-   step 4) and a production webhook endpoint in Stripe (section 4, step 4).
-5. In `/admin/` → **Sites**, update the site domain from `example.com` to your
-   real domain (used for absolute links and account emails).
+   Leave `DJANGO_DEBUG` unset — on Render the app automatically runs with
+   `DEBUG=False` and trusts its own `*.onrender.com` address
+   (`skiitrope/settings.py` reads `RENDER_EXTERNAL_HOSTNAME`).
+
+5. Click **Create Web Service** and wait for the build (a few minutes on the
+   first deploy). The site is then live at
+   `https://<your-service-name>.onrender.com`. Log into `/admin/` with your
+   existing admin account — it lives in the shared Supabase database.
+6. Point the integrations at the live URL:
+   - **Stripe** → Developers → Webhooks → **Add endpoint**:
+     `https://<your-service>.onrender.com/stripe/webhook/` with the event
+     `checkout.session.completed`. Copy the new signing secret into
+     `STRIPE_WEBHOOK_SECRET` on Render — each endpoint has its own secret.
+   - **Google Cloud Console** → your OAuth client → add the authorized
+     redirect URI `https://<your-service>.onrender.com/accounts/google/login/callback/`.
+   - Django admin → **Sites** → change `example.com` to your
+     `*.onrender.com` domain (used for absolute links and account emails).
+
+Free-tier notes: the service sleeps after ~15 minutes of inactivity (the
+next visit then takes ~30 seconds to wake up), and uploaded files reset when
+Render restarts the service — fine while testing; move to paid disk or
+object storage before taking real customers.
+
+Deploying somewhere else instead? The same env vars apply, plus: run
+`python manage.py migrate`, `collectstatic --no-input` and
+`seed_products` once, and serve with
+`gunicorn skiitrope.wsgi:application`.
 
 ---
 

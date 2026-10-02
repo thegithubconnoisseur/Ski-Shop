@@ -21,3 +21,9 @@ staticfiles/
 .idea/
 .vscode/
 *.log
+
+# Stray browser-saved pages
+Clients*console.html
+
+#docs
+stripe_backup_code.txt

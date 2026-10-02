@@ -11,5 +11,6 @@ urlpatterns = [
     path("", include("store.urls")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploaded media directly — also required in production, until product
+# images move to object storage.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
