@@ -142,6 +142,41 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# --- Logging ---------------------------------------------------------------
+
+# Django's default logging only prints request tracebacks when DEBUG=True
+# (the console handler is filtered by require_debug_true), so production
+# 500s leave no traceback in the logs. Always send them to stderr, which
+# Render's Logs tab displays.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {"format": "{levelname} {asctime} {name} {message}", "style": "{"},
+        "server": {
+            "()": "django.utils.log.ServerFormatter",
+            "format": "[{server_time}] {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
+        "server_console": {"class": "logging.StreamHandler", "formatter": "server"},
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["server_console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
 # --- Auth / allauth -------------------------------------------------------
 
 LOGIN_REDIRECT_URL = "store:home"
