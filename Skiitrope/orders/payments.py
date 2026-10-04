@@ -5,6 +5,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 
+from cart.models import CartItem
+
 from .emails import send_order_confirmation
 from .models import Order
 
@@ -79,5 +81,9 @@ def mark_order_paid(order, payment_intent_id=""):
             "updated_at",
         ]
     )
+    if order.user_id:
+        # The account cart has been paid for — clear it everywhere the
+        # account is signed in (other browsers and the mobile app).
+        CartItem.objects.filter(user_id=order.user_id).delete()
     send_order_confirmation(order)
     return True

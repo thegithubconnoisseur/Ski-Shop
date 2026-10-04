@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from cart.cart import Cart
+from cart.cart import get_cart
 
 from . import payments
 from .forms import CheckoutForm
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def checkout(request):
-    cart = Cart(request)
+    cart = get_cart(request)
     if not cart:
         messages.info(request, "Your cart is empty — add something first.")
         return redirect("cart:cart_detail")
@@ -70,7 +70,7 @@ def checkout_success(request):
                 logger.exception("Could not reconcile Stripe session %s", session_id)
 
     if order and order.status == Order.Status.PAID:
-        Cart(request).clear()
+        get_cart(request).clear()
     else:
         messages.warning(
             request,

@@ -48,11 +48,14 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "django_countries",
+    "rest_framework",
+    "rest_framework.authtoken",
     # Local
     "accounts",
     "store",
     "cart",
     "orders",
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -206,6 +209,15 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 SITE_ID = 1
+
+# --- API (mobile app) -----------------------------------------------------
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+}
 
 # --- Email: Mailgun via django-anymail (console backend without a key) ----
 

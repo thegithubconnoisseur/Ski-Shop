@@ -6,7 +6,7 @@ from django.views.decorators.http import require_POST
 
 from store.models import Product
 
-from .cart import Cart
+from .cart import get_cart
 
 
 def cart_detail(request):
@@ -16,7 +16,7 @@ def cart_detail(request):
 @require_POST
 def cart_add(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_active=True)
-    cart = Cart(request)
+    cart = get_cart(request)
 
     try:
         quantity = int(request.POST.get("quantity", 1))
@@ -42,7 +42,7 @@ def cart_add(request, product_id):
 @require_POST
 def cart_update(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_active=True)
-    cart = Cart(request)
+    cart = get_cart(request)
 
     try:
         quantity = int(request.POST.get("quantity", 1))
@@ -67,6 +67,6 @@ def cart_update(request, product_id):
 @require_POST
 def cart_remove(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    Cart(request).remove(product)
+    get_cart(request).remove(product)
     messages.info(request, f"{product.name} removed from your cart.")
     return redirect("cart:cart_detail")

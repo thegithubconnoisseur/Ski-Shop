@@ -4,10 +4,39 @@ from django.conf import settings
 
 from store.models import Product
 
+from .models import CartItem
+
 CART_SESSION_KEY = "cart"
 
 
-class Cart:
+class CartTotalsMixin:
+    """Money math shared by both cart implementations."""
+
+    @property
+    def subtotal(self):
+        return sum((item["total"] for item in self), Decimal("0.00"))
+
+    @property
+    def shipping(self):
+        if not self:
+            return Decimal("0.00")
+        if self.subtotal >= Decimal(settings.FREE_SHIPPING_THRESHOLD):
+            return Decimal("0.00")
+        return Decimal(settings.FLAT_SHIPPING_RATE)
+
+    @property
+    def free_shipping_remaining(self):
+        threshold = Decimal(settings.FREE_SHIPPING_THRESHOLD)
+        if not self or self.subtotal >= threshold:
+            return Decimal("0.00")
+        return threshold - self.subtotal
+
+    @property
+    def total(self):
+        return self.subtotal + self.shipping
+
+
+class Cart(CartTotalsMixin):
     """A shopping cart stored in the user's session.
 
     Session layout: {"<product_id>": {"quantity": 3}, ...}
@@ -82,25 +111,73 @@ class Cart:
     def count(self):
         return sum(item["quantity"] for item in self.cart.values())
 
-    @property
-    def subtotal(self):
-        return sum((item["total"] for item in self), Decimal("0.00"))
+
+class DbCart(CartTotalsMixin):
+    """A cart persisted in the database against a user account.
+
+    Signed-in shoppers get this cart instead of the session cart, which is
+    what lets the website and the mobile app share one cart per account.
+    """
+
+    def __init__(self, user):
+        self.user = user
+
+    def items(self):
+        return (
+            CartItem.objects.filter(user=self.user)
+            .select_related("product", "product__category")
+            .order_by("created_at", "id")
+        )
+
+    def add(self, product, quantity=1, override=False):
+        item, _ = CartItem.objects.get_or_create(
+            user=self.user, product=product, defaults={"quantity": 0}
+        )
+        if override:
+            item.quantity = quantity
+        else:
+            item.quantity += quantity
+        if product.stock:
+            item.quantity = min(item.quantity, product.stock)
+        item.quantity = max(item.quantity, 1)
+        item.save()
+        return item
+
+    def remove(self, product):
+        CartItem.objects.filter(user=self.user, product=product).delete()
+
+    def clear(self):
+        CartItem.objects.filter(user=self.user).delete()
+
+    def __iter__(self):
+        items = list(self.items())
+        stale = [item for item in items if not item.product.is_active]
+        if stale:
+            CartItem.objects.filter(pk__in=[item.pk for item in stale]).delete()
+            items = [item for item in items if item.product.is_active]
+        for item in items:
+            product = item.product
+            yield {
+                "product": product,
+                "quantity": item.quantity,
+                "price": product.price,
+                "total": product.price * item.quantity,
+            }
+
+    def __len__(self):
+        return self.items().count()
+
+    def __bool__(self):
+        return self.items().exists()
 
     @property
-    def shipping(self):
-        if not self.cart:
-            return Decimal("0.00")
-        if self.subtotal >= Decimal(settings.FREE_SHIPPING_THRESHOLD):
-            return Decimal("0.00")
-        return Decimal(settings.FLAT_SHIPPING_RATE)
+    def count(self):
+        return sum(item.quantity for item in self.items())
 
-    @property
-    def free_shipping_remaining(self):
-        threshold = Decimal(settings.FREE_SHIPPING_THRESHOLD)
-        if not self.cart or self.subtotal >= threshold:
-            return Decimal("0.00")
-        return threshold - self.subtotal
 
-    @property
-    def total(self):
-        return self.subtotal + self.shipping
+def get_cart(request):
+    """The cart for a request: the account cart once signed in, otherwise the
+    session cart (which is merged into the account at login)."""
+    if request.user.is_authenticated:
+        return DbCart(request.user)
+    return Cart(request)

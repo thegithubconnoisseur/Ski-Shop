@@ -1,11 +1,11 @@
 from django.conf import settings
 
-from .cart import Cart
+from .cart import get_cart
 
 
 def cart(request):
     return {
-        "cart": Cart(request),
+        "cart": get_cart(request),
         "shop": {
             "currency": settings.SHOP_CURRENCY,
             "currency_symbol": settings.SHOP_CURRENCY_SYMBOL,

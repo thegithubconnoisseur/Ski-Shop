@@ -2,4 +2,7 @@ from django.apps import AppConfig
 
 
 class CartConfig(AppConfig):
-    name = 'cart'
+    name = "cart"
+
+    def ready(self):
+        from . import signals  # noqa: F401  registers the login merge hook

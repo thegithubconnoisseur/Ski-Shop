@@ -2,11 +2,13 @@ from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from cart.cart import Cart
+from cart.cart import Cart, DbCart
+from cart.models import CartItem
 from store.models import Category, Product
 
 from .forms import CheckoutForm
@@ -117,6 +119,19 @@ class MarkPaidTests(TestCase):
         self.assertIn(self.order.number, body)
         self.assertIn("Nightride 156", body)
         self.assertIn("Ava Rider", body)
+
+    def test_paid_order_clears_account_cart(self):
+        user = get_user_model().objects.create_user(email="sync@example.com", password="pass12345")
+        cart = DbCart(user)
+        cart.add(make_product(name="Sync Board 160"), quantity=2)
+        form = CheckoutForm(CHECKOUT_PAYLOAD)
+        form.is_valid()
+        order = create_order_from_cart(cart, form, user)
+        self.assertEqual(CartItem.objects.filter(user=user).count(), 1)
+
+        mark_order_paid(order, "pi_sync")
+        self.assertFalse(CartItem.objects.filter(user=user).exists())
+        self.assertEqual(len(DbCart(user)), 0)
 
 
 class OrderNotificationTests(TestCase):

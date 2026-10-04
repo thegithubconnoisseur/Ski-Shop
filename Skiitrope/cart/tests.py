@@ -1,12 +1,16 @@
 from decimal import Decimal
 from types import SimpleNamespace
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
 from store.models import Category, Product
 
-from .cart import Cart
+from .cart import Cart, DbCart
+from .models import CartItem
+
+User = get_user_model()
 
 
 def session_cart(session):
@@ -155,3 +159,115 @@ class CartViewTests(TestCase):
 
     def get_cart(self):
         return session_cart(self.client.session)
+
+
+class DbCartTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("shopper@example.com", "pass12345")
+        self.product = make_product()
+        self.cheap = make_product(name="Cheap Cap", price=Decimal("20.00"))
+
+    def cart(self):
+        return DbCart(self.user)
+
+    def test_add_and_count(self):
+        self.cart().add(self.product, quantity=2)
+        self.assertEqual(self.cart().count, 2)
+        self.assertEqual(len(self.cart()), 1)
+        self.assertTrue(self.cart())
+
+    def test_add_accumulates_and_override(self):
+        self.cart().add(self.product, quantity=1)
+        self.cart().add(self.product, quantity=2)
+        self.assertEqual(self.cart().count, 3)
+        self.cart().add(self.product, quantity=5, override=True)
+        self.assertEqual(self.cart().count, 5)
+
+    def test_add_caps_quantity_at_stock(self):
+        product = make_product(name="Scarce Board", stock=3)
+        self.cart().add(product, quantity=99)
+        self.assertEqual(CartItem.objects.get(product=product).quantity, 3)
+
+    def test_remove_and_clear(self):
+        self.cart().add(self.product)
+        self.cart().add(self.cheap)
+        self.cart().remove(self.product)
+        self.assertEqual(len(self.cart()), 1)
+        self.cart().clear()
+        self.assertEqual(len(self.cart()), 0)
+
+    def test_totals_match_session_cart_math(self):
+        self.cart().add(self.product, quantity=1)
+        self.assertEqual(self.cart().subtotal, Decimal("200.00"))
+        self.assertEqual(self.cart().shipping, Decimal("15.00"))
+        self.assertEqual(self.cart().total, Decimal("215.00"))
+
+    def test_free_shipping_over_threshold(self):
+        self.cart().add(self.product, quantity=2)  # 400 >= 300
+        self.assertEqual(self.cart().shipping, Decimal("0.00"))
+        self.assertEqual(self.cart().free_shipping_remaining, Decimal("0.00"))
+
+    def test_iteration_skips_and_prunes_inactive_products(self):
+        self.cart().add(self.product)
+        self.cart().add(self.cheap)
+        self.product.is_active = False
+        self.product.save(update_fields=["is_active"])
+
+        rows = list(self.cart())
+
+        self.assertEqual([row["product"] for row in rows], [self.cheap])
+        self.assertFalse(CartItem.objects.filter(product=self.product).exists())
+
+    def test_rows_unique_per_user_and_product(self):
+        DbCart(self.user).add(self.product, quantity=1)
+        DbCart(self.user).add(self.product, quantity=1)
+        self.assertEqual(CartItem.objects.count(), 1)
+
+        other = User.objects.create_user("other@example.com", "pass12345")
+        DbCart(other).add(self.product, quantity=1)
+        self.assertEqual(CartItem.objects.count(), 2)
+
+
+class LoginCartMergeTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("shopper@example.com", "pass12345")
+        self.product = make_product()
+        self.cheap = make_product(name="Cheap Cap", price=Decimal("20.00"))
+
+    def session_cart(self):
+        return session_cart(self.client.session)
+
+    def test_session_cart_merges_into_account_on_login(self):
+        self.client.post(
+            reverse("cart:cart_add", args=[self.product.id]), {"quantity": 2}
+        )
+        self.client.post(
+            reverse("cart:cart_add", args=[self.cheap.id]), {"quantity": 1}
+        )
+
+        self.client.login(email="shopper@example.com", password="pass12345")
+
+        cart = DbCart(self.user)
+        self.assertEqual(cart.count, 3)
+        self.assertEqual(CartItem.objects.filter(user=self.user).count(), 2)
+        self.assertEqual(len(self.session_cart()), 0)
+
+    def test_merge_accumulates_with_existing_account_cart(self):
+        DbCart(self.user).add(self.product, quantity=1)
+        self.client.post(
+            reverse("cart:cart_add", args=[self.product.id]), {"quantity": 2}
+        )
+
+        self.client.login(email="shopper@example.com", password="pass12345")
+
+        self.assertEqual(DbCart(self.user).count, 3)
+
+    def test_logged_in_cart_adds_go_to_database_not_session(self):
+        self.client.login(email="shopper@example.com", password="pass12345")
+
+        self.client.post(
+            reverse("cart:cart_add", args=[self.product.id]), {"quantity": 2}
+        )
+
+        self.assertEqual(DbCart(self.user).count, 2)
+        self.assertEqual(len(self.session_cart()), 0)
