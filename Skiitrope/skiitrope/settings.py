@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "django_countries",
+    "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
     # Local
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -218,6 +220,13 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
 }
+
+# CORS: only active when CORS_ALLOWED_ORIGINS is set, so the deployed site
+# stays locked down while local dev (e.g. the Expo web app on :8081) can hit
+# the API from the browser.
+CORS_ALLOWED_ORIGINS = [
+    o.strip() for o in env("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()
+]
 
 # --- Email: Mailgun via django-anymail (console backend without a key) ----
 

@@ -73,6 +73,25 @@ def google_payload(**overrides):
 
 
 class ProductApiTests(TestCase):
+    @override_settings(CORS_ALLOWED_ORIGINS=["http://localhost:8081"])
+    def test_cors_allowed_origin_gets_headers(self):
+        response = self.client.get("/api/products/", HTTP_ORIGIN="http://localhost:8081")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Access-Control-Allow-Origin"], "http://localhost:8081"
+        )
+
+    def test_cors_disallowed_origin_gets_no_headers(self):
+        make_product()
+
+        response = self.client.get(
+            "/api/products/", HTTP_ORIGIN="https://evil.example.com"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Access-Control-Allow-Origin", response)
+
     def test_list_returns_active_products(self):
         make_product()
         make_product(name="Hidden", is_active=False)

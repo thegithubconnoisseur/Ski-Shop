@@ -3,6 +3,7 @@ dj-database-url==3.0.1
 django-allauth==65.19.7
 django-anymail==15.2
 django-countries==9.1.0
+django-cors-headers==4.9.0
 djangorestframework==3.18.1
 gunicorn==23.0.0
 pillow==11.3.0
