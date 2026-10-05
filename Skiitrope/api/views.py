@@ -1,6 +1,9 @@
+import json
+
 import jwt as pyjwt
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from jwt import PyJWKClient
 from rest_framework import status
@@ -8,6 +11,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from urllib.parse import urlencode
 
 from allauth.socialaccount.models import SocialAccount
 from cart.cart import DbCart, get_cart
@@ -202,6 +206,47 @@ def email_login(request):
         )
     token, _ = Token.objects.get_or_create(user=user)
     return Response({"token": token.key, "user": UserSerializer(user).data})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    Token.objects.filter(user=request.user).delete()
+    return Response({"detail": "Signed out."})
+
+
+def mobile_auth_finish(request):
+    """Hand the mobile app a token after an in-app browser login.
+
+    The app opens the site's normal Google/email login with ``next`` set to
+    this view, so allauth runs its whole standard OAuth dance against the
+    redirect URIs already registered in Google Cloud Console. Once the user
+    is authenticated (session cookie lives in the in-app browser), we mint
+    an API token and bounce back to the app via its deep link. Django
+    refuses raw redirects to non-http schemes, so the handoff is a tiny
+    page that navigates to the link (with a manual fallback).
+    """
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect("/accounts/login/?next=/api/auth/mobile/finish/")
+    token, _ = Token.objects.get_or_create(user=request.user)
+    url = "skiitropemobile://auth?" + urlencode(
+        {"token": token.key, "email": request.user.email}
+    )
+    quoted = json.dumps(url)
+    html = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        "<title>Returning to Skiitrope</title></head>"
+        "<body style=\"font-family:system-ui,sans-serif;text-align:center;"
+        "padding-top:3rem;color:#111\">"
+        "<p>Signing you in…</p>"
+        f"<script>window.location.replace({quoted});</script>"
+        f"<p><a href='{url}'>Tap here if the app does not open</a></p>"
+        "</body></html>"
+    )
+    response = HttpResponse(html)
+    response["Cache-Control"] = "no-store"
+    return response
 
 
 @api_view(["POST"])

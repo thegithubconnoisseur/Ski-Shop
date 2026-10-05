@@ -14,6 +14,8 @@ urlpatterns = [
     path("cart/remove/", views.cart_remove, name="cart_remove"),
     path("auth/google/", views.google_auth, name="google_auth"),
     path("auth/login/", views.email_login, name="email_login"),
+    path("auth/logout/", views.logout, name="logout"),
+    path("auth/mobile/finish/", views.mobile_auth_finish, name="mobile_auth_finish"),
     path("checkout/", views.checkout, name="checkout"),
     path("orders/", views.order_list, name="order_list"),
 ]

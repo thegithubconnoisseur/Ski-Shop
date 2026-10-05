@@ -305,6 +305,43 @@ class EmailLoginApiTests(TestCase):
         self.assertEqual(response.status_code, 401)
 
 
+class LogoutApiTests(TestCase):
+    def test_logout_deletes_token(self):
+        user = make_user()
+        client = auth_client(user)
+        self.assertTrue(Token.objects.filter(user=user).exists())
+
+        response = client.post("/api/auth/logout/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Token.objects.filter(user=user).exists())
+
+    def test_requires_auth(self):
+        response = self.client.post("/api/auth/logout/")
+        self.assertEqual(response.status_code, 401)
+
+
+class MobileAuthFinishTests(TestCase):
+    def test_authenticated_returns_deep_link_page(self):
+        user = make_user()
+        self.client.force_login(user)
+
+        response = self.client.get("/api/auth/mobile/finish/")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("skiitropemobile://auth?", body)
+        token = Token.objects.get(user=user)
+        self.assertIn(f"token={token.key}", body)
+        self.assertIn("email=shopper%40example.com", body)
+        self.assertIn("no-store", response["Cache-Control"])
+
+    def test_anonymous_redirected_to_login(self):
+        response = self.client.get("/api/auth/mobile/finish/")
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith("/accounts/login/"))
+
+
 @override_settings(**STRIPE_TEST_SETTINGS)
 class CheckoutApiTests(TestCase):
     def setUp(self):
